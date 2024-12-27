@@ -4,115 +4,102 @@
  *
  * @format
  */
-
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import 'react-native-gesture-handler';
+import React, { useEffect } from 'react';
+import { StackRouters } from './src/routers/StackRouters';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NotificationListener, requestUserPermission, getFCM_Token, askPermission, requestNotificationPermission } from './src/pushnotification_helper';
+import { PermissionsAndroid, Platform } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  // const navigation = useNavigation();
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  useEffect(() => {
+    (async () => {
+      // await setStore();
+      await requestCameraPermission()
+      // let authToken = await getData('authToken');
+      // setAuthToken(authToken as never);
+    })();
+
+    return () => {
+      console.log('unmont')
+      // this now gets called when the component unmounts
+    };
+
+  }, []);
+
+  // async function setStore() {
+  //   await requestNotificationPermission();
+  //   await requestUserPermission();
+  //   await messaging()
+  //     .hasPermission()
+  //     .then(async enabled => {
+  //       if (enabled) {
+  //         console.log('User have the permission for Push notification');
+  //         // user has permissions
+  //         await getFCM_Token();
+  //         await NotificationListener();
+  //       } else {
+  //         console.log('User do not have permission for Push notification');
+  //         await askPermission();
+  //       }
+  //     });
+  // }
+
+  const requestCameraPermission = async () => {
+    let retrunType: boolean = false;
+    if (Platform.OS === 'android') {
+        
+        try {
+            const result = await PermissionsAndroid.requestMultiple([
+                PermissionsAndroid.PERMISSIONS.CAMERA,
+                PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+                PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            ]);
+
+            let deviceVersion = DeviceInfo.getSystemVersion();
+            if (parseInt(deviceVersion) >= 13) {
+                retrunType = true;
+            } else {
+                if (
+                    result['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&
+                    result['android.permission.READ_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED &&
+                    result['android.permission.WRITE_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED
+                ) {
+                    retrunType = true;
+                } else {
+                    retrunType = false;
+                }
+            }
+        } catch (err) {
+            console.log('err', err);
+            retrunType = false;
+        }
+
+        return retrunType;
+
+    } else {
+        return true;
+    }
+};
+
+
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
+    <SafeAreaProvider /*  style={backgroundStyle} */>
+      {/* <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      /> */}
+      <NavigationContainer >
+        <StackRouters />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
 export default App;
+
